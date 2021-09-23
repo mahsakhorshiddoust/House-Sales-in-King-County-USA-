@@ -1,0 +1,119 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler,PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+%matplotlib inline
+
+
+file_name='https://cf-courses-data.s3.us.cloud-object-storage.appdomain.cloud/IBMDeveloperSkillsNetwork-DA0101EN-SkillsNetwork/labs/FinalModule_Coursera/data/kc_house_data_NaN.csv'
+df=pd.read_csv(file_name)
+
+
+df.head()
+df.dtypes
+df.describe()
+
+
+df.drop(["id", "Unnamed: 0"], axis = 1, inplace = True)
+df.describe()
+
+
+print("number of NaN values for the column bedrooms :", df['bedrooms'].isnull().sum())
+print("number of NaN values for the column bathrooms :", df['bathrooms'].isnull().sum())
+
+mean=df['bedrooms'].mean()
+df['bedrooms'].replace(np.nan,mean, inplace=True)
+
+mean=df['bathrooms'].mean()
+df['bathrooms'].replace(np.nan,mean, inplace=True)
+
+print("number of NaN values for the column bedrooms :", df['bedrooms'].isnull().sum())
+print("number of NaN values for the column bathrooms :", df['bathrooms'].isnull().sum())
+
+
+df['floors'].value_counts().to_frame()
+sns.boxplot(df['waterfront'], df['price'])
+plt.title("'Boxplot 'Waterfront' vs 'Price'")
+
+
+sns.regplot(df['sqft_above'], df['price'])
+
+df.corr()['price'].sort_values()
+
+
+###############################################
+
+X = df[['long']]
+Y = df['price']
+lm = LinearRegression()
+lm.fit(X,Y)
+lm.score(X, Y)
+
+
+T = df[['sqft_living']]
+S = df['price']
+lm2 = LinearRegression()
+lm2.fit(T, S)
+print("the predicted values are:", lm2.predict(T))
+lm2.score(T, S)
+
+
+features =["floors", "waterfront","lat" ,"bedrooms" ,"sqft_basement" ,"view" ,"bathrooms","sqft_living15","sqft_above","grade","sqft_living"] 
+
+
+lrm = LinearRegression()
+M = df[features]
+N = df['price']
+lrm.fit(M, N)
+lrm.score(M, N)
+
+
+Input=[('scale',StandardScaler()),('polynomial', PolynomialFeatures(include_bias=False)),('model',LinearRegression())]
+
+
+
+pipe = Pipeline(Input)
+
+pipe.fit(df[features], N)
+print("the predicted values are=", str(pipe.predict(df[features])))
+print("the predicted values are=", str(pipe.score(df[features], N)))
+
+
+
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import train_test_split
+print("done")
+
+
+
+features =["floors", "waterfront","lat" ,"bedrooms" ,"sqft_basement" ,"view" ,"bathrooms","sqft_living15","sqft_above","grade","sqft_living"]    
+X = df[features]
+Y = df['price']
+
+x_train, x_test, y_train, y_test = train_test_split(X, Y, test_size=0.15, random_state=1)
+
+
+print("number of test samples:", x_test.shape[0])
+print("number of training samples:",x_train.shape[0])
+
+
+
+from sklearn.linear_model import Ridge
+rg = Ridge(alpha = 0.1)
+rg.fit(x_train, y_train)
+rg.score(x_test, y_test)
+
+
+pr = PolynomialFeatures(degree=2)
+x_train_pr = pr.fit_transform(x_train[features])
+x_test_pr = pr.fit_transform(x_test[features])
+
+RidgeModel = Ridge(alpha = 0.1)
+RidgeModel.fit(x_train_pr, y_train)
+yhat = RidgeModel.predict(x_test_pr)
+RidgeModel.score(x_test_pr, y_test)
+
+
